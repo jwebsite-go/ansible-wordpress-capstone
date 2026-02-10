@@ -1,0 +1,68 @@
+---
+# Step 3a + 3b: Установка WordPress и зависимостей
+
+# 1. Установка пакетов для WordPress
+- name: Install required packages
+  ansible.builtin.apt:
+    name: 
+      - apache2
+      - php
+      - php-pear
+      - php-cgi
+      - php-common
+      - php-curl
+      - php-mbstring
+      - php-gd
+      - php-mysqlnd
+      - php-bcmath
+      - php-json
+      - php-xml
+      - php-intl
+      - php-zip
+      - php-imap
+      - php-imagick
+      - libapache2-mod-php
+      - wget
+      - unzip
+    update_cache: yes
+    state: present
+
+# 2. Включение и запуск Apache
+- name: Enable Apache service
+  ansible.builtin.systemd:
+    name: apache2
+    enabled: true
+    masked: no
+    state: started
+
+# 3. Распаковка WordPress
+- name: Unarchive wordpress
+  ansible.builtin.unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: /var/www/html/
+    remote_src: yes
+    owner: codio
+    group: www-data
+    extra_opts: [--strip-components=1]
+
+# 4. Создание wp-config.php из шаблона
+- name: Update Config
+  ansible.builtin.template:
+    src: wp-config.php.j2
+    dest: /var/www/html/wp-config.php
+
+# 5. Настройка прав доступа и владельца
+- name: Change file ownership, group and permissions
+  ansible.builtin.file:
+    path: /var/www/html
+    owner: codio
+    group: www-data
+    mode: u=rwX,g=rwX,o=rX
+    recurse: true
+    state: directory
+
+# 6. Удаление старого index.html
+- name: remove old index
+  ansible.builtin.file:
+    path: /var/www/html/index.html
+    state: absent

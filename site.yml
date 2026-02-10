@@ -1,0 +1,10 @@
+- hosts: localhost
+  become: yes
+  vars_files:
+    - vars/main.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - role: wordpress
+    - role: geerlingguy.mysql
+
