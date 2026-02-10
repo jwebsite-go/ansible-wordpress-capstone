@@ -1,0 +1,6 @@
+---
+- name: Deploy WordPress
+  hosts: localhost
+  become: true   # чтобы иметь права root для установки пакетов и изменения конфигурации Apache
+  roles:
+    - wordpress

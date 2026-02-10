@@ -1,4 +1,6 @@
 ---
+# roles/wordpress/tasks/main.yml
+
 # Step 3a + 3b: Установка WordPress и зависимостей
 
 # 1. Установка пакетов для WordPress
@@ -36,7 +38,7 @@
     state: started
 
 # 3. Распаковка WordPress
-- name: Unarchive wordpress
+- name: Unarchive WordPress
   ansible.builtin.unarchive:
     src: https://wordpress.org/latest.tar.gz
     dest: /var/www/html/
@@ -46,7 +48,7 @@
     extra_opts: [--strip-components=1]
 
 # 4. Создание wp-config.php из шаблона
-- name: Update Config
+- name: Update wp-config.php
   ansible.builtin.template:
     src: wp-config.php.j2
     dest: /var/www/html/wp-config.php
@@ -62,7 +64,39 @@
     state: directory
 
 # 6. Удаление старого index.html
-- name: remove old index
+- name: Remove old index.html
   ansible.builtin.file:
     path: /var/www/html/index.html
     state: absent
+
+# Step 3c: Конфигурация Apache
+
+# 7. Включение .htaccess файлов и установка заголовков
+- name: Enable .htaccess files in Apache config
+  ansible.builtin.replace:
+    path: /etc/apache2/apache2.conf
+    regexp: 'AllowOverride None'
+    replace: |
+      AllowOverride All
+      RequestHeader set X-Forwarded-Proto "https"
+      RequestHeader set X-Forwarded-Port "443"
+  notify:
+    - restart apache2
+
+# 8. Включение модуля mod_headers
+- name: Create a symbolic link for mod_headers
+  ansible.builtin.file:
+    src: /etc/apache2/mods-available/headers.load
+    dest: /etc/apache2/mods-enabled/headers.load
+    state: link
+  notify:
+    - restart apache2
+
+# 9. Замена порта Apache на 3000
+- name: Enables port 3000
+  ansible.builtin.replace:
+    path: /etc/apache2/ports.conf
+    regexp: 'Listen 80'
+    replace: 'Listen 3000'
+  notify:
+    - restart apache2
